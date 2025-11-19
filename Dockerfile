@@ -1,13 +1,31 @@
-FROM wettyoss/wetty:latest
+FROM ubuntu:22.04
 
-# Instalar utilidades opcionales
-RUN apk update && apk add nano vim curl git shadow
+# Actualizar e instalar dependencias
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    nodejs \
+    npm \
+    curl \
+    nano \
+    vim \
+    git
+
+# Crear directorio para SSH
+RUN mkdir /var/run/sshd
 
 # Crear contraseña root
 RUN echo "root:root" | chpasswd
 
-# Exponer puertos
+# Permitir login con root
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+# Instalar Wetty
+RUN npm install -g wetty@latest
+
+# Exponer puerto web
 EXPOSE 3000
 
-# Iniciar Wetty (usa el ssh interno de la imagen base)
-CMD wetty --ssh-host=root@localhost
+# Iniciar SSH + Wetty
+CMD service ssh start && \
+    wetty --port $PORT --ssh-host=root@localhost
+
