@@ -1,35 +1,34 @@
-FROM node:18-alpine
+FROM node:18-bullseye
 
 USER root
 
-# Instalar dependencias necesarias
-RUN apk update && apk add --no-cache \
+# Instalar dependencias necesarias para node-pty / Wetty
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    git \
+    openssh-server \
     nano \
     vim \
-    curl \
-    git \
-    shadow \
-    openssh
+    curl
 
-# Instalar Wetty global
+# Instalar Wetty globalmente
 RUN npm install -g wetty@latest
 
-# Crear usuario root con contraseña
+# Configurar SSH
+RUN mkdir /var/run/sshd
 RUN echo "root:root" | chpasswd
 
-# Habilitar SSH dentro del contenedor
-RUN ssh-keygen -A
-
-# Railway asigna PORT automáticamente
+# Railway asigna este puerto
 ENV PORT=3000
 
 EXPOSE 3000
 
-# Iniciar SSH y luego Wetty
+# Comando de inicio
 CMD sh -c "\
-    /usr/sbin/sshd && \
-    wetty --port=${PORT} --ssh-user=root --ssh-host=localhost \
+    service ssh start && \
+    wetty --port=$PORT --ssh-host=localhost --ssh-user=root \
 "
-
 
 
