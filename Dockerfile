@@ -1,25 +1,24 @@
 FROM wettyoss/wetty:latest
 
-# Instalar herramientas útiles
 USER root
-RUN apt-get update && apt-get install -y \
+
+# Instalar herramientas (ALPINE usa apk)
+RUN apk update && apk add --no-cache \
     nano \
     vim \
     curl \
     git \
-    passwd \
-    && rm -rf /var/lib/apt/lists/*
+    shadow
 
-# Crear contraseña del root (Wetty usa SSH interno)
+# Crear password para root
 RUN echo "root:root" | chpasswd
 
-# Variable de puerto requerida por Railway
+# Railway usa esta variable
 ENV PORT=3000
 
-# Exponer el puerto
 EXPOSE 3000
 
-# Iniciar Wetty
+# Iniciar wetty
 CMD ["sh", "-c", "wetty --port=$PORT --ssh-user=root --ssh-host=localhost"]
 
 
