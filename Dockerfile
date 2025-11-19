@@ -2,33 +2,26 @@ FROM node:18-bullseye
 
 USER root
 
-# Instalar dependencias necesarias para node-pty / Wetty
 RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    git \
-    openssh-server \
-    nano \
-    vim \
-    curl
+    python3 make g++ git openssh-server nano vim curl
 
-# Instalar Wetty globalmente
 RUN npm install -g wetty@latest
 
-# Configurar SSH
+# --- SSH CONFIG ---
 RUN mkdir /var/run/sshd
 RUN echo "root:root" | chpasswd
 
-# Railway asigna este puerto
+# Habilitar root + password login
+RUN sed -i 's/PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+RUN sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
 ENV PORT=3000
 
 EXPOSE 3000
 
-# Comando de inicio
 CMD sh -c "\
     service ssh start && \
-    wetty --port=$PORT --ssh-host=localhost --ssh-user=root \
-"
-
+    sleep 2 && \
+    wetty --port=$PORT --ssh-host=127.0.0.1 --ssh-user=root "
 
