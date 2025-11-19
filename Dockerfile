@@ -1,31 +1,27 @@
 FROM ubuntu:22.04
 
-# Actualizar e instalar dependencias
-RUN apt-get update && apt-get install -y \
-    openssh-server \
-    nodejs \
-    npm \
-    curl \
-    nano \
-    vim \
-    git
+# Instalar dependencias para poder usar repos oficiales de Node
+RUN apt-get update && apt-get install -y curl openssh-server nano vim git
 
-# Crear directorio para SSH
+# Instalar Node 18 (necesario para Wetty)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
+
+# Crear directorio SSH
 RUN mkdir /var/run/sshd
 
-# Crear contraseña root
-RUN echo "root:root" | chpasswd
+# Habilitar login root
+RUN echo "root:root" | chpasswd \
+    && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
-# Permitir login con root
-RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-
-# Instalar Wetty
+# Instalar Wetty global
 RUN npm install -g wetty@latest
 
-# Exponer puerto web
+# Exponer el puerto (Railway usa PORT)
 EXPOSE 3000
 
-# Iniciar SSH + Wetty
+# Inicializar SSH y luego Wetty
 CMD service ssh start && \
-    wetty --port $PORT --ssh-host=root@localhost
+    wetty --port $PORT --ssh-host=root@localhost --base-path /wetty
+
 
